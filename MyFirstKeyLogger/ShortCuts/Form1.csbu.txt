@@ -1,0 +1,233 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Shell;
+using System.Windows;
+using Microsoft.Win32;
+using System.Diagnostics;
+
+namespace MyFirstKeyLogger
+{
+    public partial class Form1 : Form
+    {
+        //
+        // Fields
+        //
+
+        //this variable allows to start and stop the thread
+        private ManualResetEvent _event = new ManualResetEvent(true);
+
+        //imprts GetAsynkKeyState
+        [DllImport("user32.dll")]
+        public static extern int GetAsyncKeyState(Int32 i);
+
+        //a thread to keep listening to keyboard without freezing the Form
+        private Thread listener;
+
+        //this variable says should start listening to the keyboard to execute a command or naot
+        public bool shouldExecute { get; private set; }
+
+        public static int selectedId
+        {
+            set
+            {              
+                new Item(Config.commands[value]).ShowDialog();
+                //System.Windows.Forms.MessageBox.Show(value+"");
+            }
+        }
+
+
+        //A class to list Items in the winform
+        private ItemList itemls;
+
+        private Tasks tasks;
+
+        private Listener listening;
+
+        //constructor
+        public Form1()
+        {
+            InitializeComponent();
+            itemls = new ItemList(items);
+            Config.database = new SqliteHelper();
+            tasks = new Tasks();
+            listItems();
+
+            listening = new Listener(logTxt);
+
+
+            //listener = new Thread(new ThreadStart(Listen));
+            //listener.Start();
+            //_event.Set();
+        }
+
+        //
+        // Winform
+        //
+        private void listItems()
+        {
+            itemls.clear();
+            foreach(Command cmd in Config.commands)
+            {
+                itemls.addItem(cmd);
+            }
+        }
+
+        //
+        // winform Event
+        //
+
+        //Start Listening
+        private void button1_Click(object sender, EventArgs e)
+        {
+            //To Start the thread  
+            //_event.Set();
+            listening.start();
+        }
+
+        //Stop Listening
+        private void button2_Click(object sender, EventArgs e)
+        {
+            //To suspend the thread
+            //_event.Reset();
+            listening.stop();
+        }
+
+        //add new Event
+        private void button_Click(object sender, EventArgs e)
+        {
+            int btnVal = 96 + int.Parse(((Button)sender).Text);
+            Command cmd = new Command()
+            {
+                id = -1,
+                button = btnVal,
+                path = "Choose Path",
+                description = "Description..."
+            };
+            new Item(cmd).ShowDialog();
+            listItems();
+        }
+
+
+
+
+        //
+        // Shorcuting
+        //
+        // To listen to what is beeing pressed in the keyboard
+        public void Listen()
+        {
+            int key=0;
+            while (true)
+            {
+                _event.WaitOne();
+                for (int i = 0; i < 255; i++)
+                {
+                    int keyState = GetAsyncKeyState(i);
+
+                    if (keyState == 1 || keyState == -32767)
+                    {
+                        key = i;
+                        break;
+                    }              
+                }
+                
+                if 
+                    (shouldExecute) executeCommand(key);
+                else
+                    checkForCommand(key);
+                Thread.Sleep(5);
+            }
+        }
+
+        //To write the logs to a file
+        public void WriteToFile(string Message)
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\ServiceLog_" + DateTime.Now.Date.ToShortDateString().Replace('/', '_') + ".txt";
+            if (!File.Exists(filepath))
+            {
+                // Create a file to write to.   
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    sw.WriteLine(Message);
+                }
+            }
+            else
+            {
+                using (StreamWriter sw = File.AppendText(filepath))
+                {
+                    sw.WriteLine(Message);
+                }
+            }
+
+        }
+
+        //check if AltGr is pressed so it will start listening
+        private void checkForCommand(int keyval)
+        {
+            if(keyval == 165)
+            {
+                shouldExecute = true;
+            }
+        }
+
+        //execute the command associated to the pressed buton
+        private void executeCommand(int keyval)
+        {
+            if (Keys.RMenu == (Keys)keyval) return;
+            AppendTextBox("AltGr + "+(Keys)keyval+"\n");
+            switch ((Keys)keyval)
+            {
+                case Keys.P:
+                    tasks.updateProxy();
+                    shouldExecute = false;
+                    break;
+                case Keys.T:
+                    tasks.openTerminal();
+                    shouldExecute = false;
+                    break;
+                default:
+                    if (keyval < 106 && keyval > 95)
+                    {
+                        tasks.executeFromDataBase(keyval);
+                        shouldExecute = false;
+                    }
+                        
+                    break;
+               
+            }
+        }
+        
+        
+        //
+        //  log
+        //
+
+        //add to Log
+        private void AppendTextBox(string value)
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<string>(AppendTextBox), new object[] { value });
+                return;
+            }
+            logTxt.Text += value;
+            Log.write(DateTime.Now.ToShortTimeString() + ": "+ value);
+        }
+    }
+}

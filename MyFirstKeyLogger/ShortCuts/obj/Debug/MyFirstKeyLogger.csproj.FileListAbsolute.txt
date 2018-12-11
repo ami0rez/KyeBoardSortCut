@@ -1,0 +1,7 @@
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\obj\Debug\MyFirstKeyLogger.ShortCut.resources
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\obj\Debug\MyFirstKeyLogger.Item.resources
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\obj\Debug\ShortCuts.Properties.Resources.resources
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\obj\Debug\MyFirstKeyLogger.csproj.GenerateResource.Cache
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\obj\Debug\ShortCuts.exe
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\obj\Debug\ShortCuts.pdb
+C:\Users\Amine\documents\visual studio 2015\Projects\MyFirstKeyLogger\MyFirstKeyLogger\bin\Debug\ShortCuts.exe.config
